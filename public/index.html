@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON FLUO - Téléchargeur YouTube</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap');
+        
+        :root {
+            --neon-pink: #ff1493;
+            --neon-pink-light: #ff69b4;
+            --neon-purple: #9d00ff;
+            --dark-bg: #0a0a0a;
+            --darker-bg: #050505;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            font-family: 'Montserrat', sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 20, 147, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 105, 180, 0.15) 0%, transparent 20%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Effet Neon Fluo */
+        .neon-text {
+            color: var(--neon-pink);
+            text-shadow: 
+                0 0 5px var(--neon-pink),
+                0 0 10px var(--neon-pink),
+                0 0 20px var(--neon-pink-light),
+                0 0 40px var(--neon-pink-light);
+            text-align: center;
+            font-size: 3em;
+            margin-bottom: 30px;
+            animation: flicker 1.5s infinite alternate;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow:
+                    0 0 5px var(--neon-pink),
+                    0 0 10px var(--neon-pink),
+                    0 0 20px var(--neon-pink-light),
+                    0 0 40px var(--neon-pink-light),
+                    0 0 60px var(--neon-pink-light);
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+                opacity: 0.7;
+            }
+        }
+        
+        .input-box {
+            background: rgba(10, 10, 10, 0.8);
+            border: 2px solid var(--neon-pink);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 0 15px rgba(255, 20, 147, 0.5),
+                inset 0 0 10px rgba(255, 105, 180, 0.2);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+        
+        .input-box:hover {
+            box-shadow: 
+                0 0 25px rgba(255, 20, 147, 0.8),
+                inset 0 0 15px rgba(255, 105, 180, 0.3);
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(30, 30, 30, 0.8);
+            color: var(--neon-pink-light);
+            font-size: 1em;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--neon-pink);
+            transition: all 0.3s;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .url-input::placeholder {
+            color: rgba(255, 105, 180, 0.6);
+        }
+        
+        .url-input:focus {
+            outline: none;
+            border-left: 3px solid var(--neon-pink-light);
+            box-shadow: 
+                0 0 10px rgba(255, 105, 180, 0.5),
+                inset 0 0 5px rgba(255, 20, 147, 0.3);
+            background: rgba(40, 40, 40, 0.8);
+        }
+        
+        .quality-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .quality-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            background: rgba(30, 30, 30, 0.8);
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink-light);
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quality-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent,
+                transparent,
+                transparent,
+                rgba(255, 20, 147, 0.1)
+            );
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+        
+        .quality-btn:hover, .quality-btn.active {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 
+                0 0 15px var(--neon-pink),
+                inset 0 0 10px rgba(255, 105, 180, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .quality-btn:hover::before {
+            left: 100%;
+        }
+        
+        .quality-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%;
+            height: 3px;
+            background: var(--neon-pink-light);
+            box-shadow: 0 0 10px var(--neon-pink-light);
+            border-radius: 3px;
+        }
+        
+        .download-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-pink-light));
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 
+                0 5px 15px rgba(255, 20, 147, 0.4),
+                inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--neon-pink-light), var(--neon-pink));
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: -1;
+        }
+        
+        .download-btn:hover {
+            box-shadow: 
+                0 8px 25px rgba(255, 20, 147, 0.6),
+                inset 0 0 15px rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+            color: #000;
+        }
+        
+        .download-btn:hover::before {
+            opacity: 1;
+        }
+        
+        .download-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .playlist-option {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-right: 15px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(30, 30, 30, 0.8);
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid var(--neon-pink);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 2px;
+            background-color: var(--neon-pink-light);
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--neon-pink);
+        }
+        
+        input:checked + .slider {
+            background-color: var(--neon-pink);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background-color: #000;
+            box-shadow: 0 0 10px #000;
+        }
+        
+        .signature {
+            text-align: right;
+            margin-top: 40px;
+            font-style: italic;
+            color: var(--neon-pink-light);
+            text-shadow: 0 0 5px var(--neon-pink);
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+        
+        .loader {
+            display: none;
+            border: 4px solid var(--neon-pink);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+        
+        @keyframes spin {
+            0% { 
+                transform: rotate(0deg); 
+                border-color: var(--neon-pink);
+                border-top-color: transparent;
+            }
+            50% {
+                border-color: var(--neon-pink-light);
+                border-top-color: transparent;
+            }
+            100% { 
+                transform: rotate(360deg); 
+                border-color: var(--neon-pink);
+                border-top-color: transparent;
+            }
+        }
+        
+        /* Effets supplémentaires */
+        .glow-effect {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,20,147,0.3) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .glow-1 {
+            top: -50px;
+            left: -50px;
+            animation: float 15s infinite linear;
+        }
+        
+        .glow-2 {
+            bottom: -80px;
+            right: -30px;
+            animation: float 20s infinite linear reverse;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(50px, 50px) rotate(90deg);
+            }
+            50% {
+                transform: translate(0, 100px) rotate(180deg);
+            }
+            75% {
+                transform: translate(-50px, 50px) rotate(270deg);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Effets de fond -->
+    <div class="glow-effect glow-1"></div>
+    <div class="glow-effect glow-2"></div>
+    
+    <div class="container">
+        <h1 class="neon-text">Neon Fluo Downloader</h1>
+        
+        <div class="input-box">
+            <input type="text" class="url-input" placeholder="Coller le lien YouTube ici..." id="videoUrl">
+            
+            <div class="playlist-option">
+                <label class="switch">
+                    <input type="checkbox" id="playlistToggle">
+                    <span class="slider"></span>
+                </label>
+                <span style="color: var(--neon-pink-light);">Télécharger toute la playlist (ZIP)</span>
+            </div>
+            
+            <div class="quality-select">
+                <button class="quality-btn" data-quality="128">128 kbps</button>
+                <button class="quality-btn active" data-quality="192">192 kbps</button>
+                <button class="quality-btn" data-quality="256">256 kbps</button>
+                <button class="quality-btn" data-quality="320">320 kbps</button>
+            </div>
+            
+            <button class="download-btn" id="downloadBtn">TÉLÉCHARGER</button>
+            <div class="loader" id="loader"></div>
+        </div>
+        
+        <div class="signature">Gleaphe 2025 - Neon Fluo Edition</div>
+    </div>
+
+    <script>
+        // Sélection de la qualité
+        const qualityBtns = document.querySelectorAll('.quality-btn');
+        let selectedQuality = '192';
+        
+        qualityBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                qualityBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedQuality = btn.dataset.quality;
+            });
+        });
+        
+        // Téléchargement réel
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const url = document.getElementById('videoUrl').value.trim();
+            const isPlaylist = document.getElementById('playlistToggle').checked;
+            const loader = document.getElementById('loader');
+            const btn = document.getElementById('downloadBtn');
+            
+            if (!url || !url.match(/youtube\.com|youtu\.be/)) {
+                alert('Veuillez entrer une URL YouTube valide');
+                return;
+            }
+            
+            // Afficher le loader
+            btn.disabled = true;
+            loader.style.display = 'block';
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        quality: selectedQuality,
+                        isPlaylist: isPlaylist
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Créer un lien de téléchargement invisible
+                    const a = document.createElement('a');
+                    a.href = data.filePath;
+                    a.download = data.filename || 'download' + (isPlaylist ? '.zip' : '.mp3');
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    // Message de succès
+                    alert(`✅ Téléchargement réussi !\n\nFormat: ${isPlaylist ? 'ZIP' : 'MP3'}\nQualité: ${selectedQuality}kbps`);
+                } else {
+                    throw new Error(data.error || 'Erreur inconnue');
+                }
+            } catch (err) {
+                console.error('Erreur:', err);
+                alert(`❌ Échec du téléchargement:\n${err.message}`);
+            } finally {
+                // Réinitialiser l'interface
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+        
+        // Effet de saisie automatique pour la démo
+        const demoUrls = [
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "https://youtu.be/9bZkp7q19f0",
+            "https://www.youtube.com/playlist?list=PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG"
+        ];
+        
+        document.getElementById('videoUrl').addEventListener('focus', function() {
+            if (!this.value) {
+                this.value = demoUrls[Math.floor(Math.random() * demoUrls.length)];
+            }
+        });
+    </script>
+</body>
+</html>
