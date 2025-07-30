@@ -8,7 +8,7 @@ Youtube Downloader * ( Tracks + Playlists .zip )
 
 # DEPENDANCES NODE.JS
 
-    npm install express cors diskusage
+    npm install express cors 
 
 # RUN 
 
