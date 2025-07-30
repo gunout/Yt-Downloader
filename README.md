@@ -16,7 +16,9 @@ Youtube Downloader * ( Tracks + Playlists .zip )
      node server.js
 
 
-<img width="1280" height="1024" alt="Youtube Plylists downloader" src="https://github.com/user-attachments/assets/305abeec-b51f-40a0-b34d-535e67425db9" />
+
+<img width="1280" height="1024" alt="Screenshot_2025-07-30_10-34-03" src="https://github.com/user-attachments/assets/6403df4a-5fcc-4421-8897-025b398f61fb" />
+
 
 
 By Gleaphe 2025 .
