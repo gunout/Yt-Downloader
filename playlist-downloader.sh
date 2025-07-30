@@ -2,7 +2,7 @@
 URL=$1
 QUALITY=$2
 OUTPUT_ZIP=$3
-MAX_ITEMS=${4:-10} # Limite par défaut à 10 éléments
+MAX_ITEMS=${4:-100} # Limite augmentée à 100 éléments par défaut
 
 TEMP_DIR=$(mktemp -d -t ytdl-XXXXXX) || exit 1
 cd "$TEMP_DIR" || exit 1
