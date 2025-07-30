@@ -36,7 +36,6 @@
             z-index: 1;
         }
         
-        /* Effet Neon Fluo */
         .neon-text {
             color: var(--neon-pink);
             text-shadow: 
@@ -237,6 +236,8 @@
             display: flex;
             align-items: center;
             margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .switch {
@@ -291,6 +292,23 @@
             box-shadow: 0 0 10px #000;
         }
         
+        .max-downloads-input {
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink-light);
+            padding: 8px;
+            border-radius: 5px;
+            width: 60px;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .max-downloads-input:focus {
+            outline: none;
+            border-color: var(--neon-pink-light);
+            box-shadow: 0 0 5px var(--neon-pink);
+        }
+        
         .signature {
             text-align: right;
             margin-top: 40px;
@@ -330,7 +348,6 @@
             }
         }
         
-        /* Effets supplémentaires */
         .glow-effect {
             position: fixed;
             width: 200px;
@@ -370,10 +387,30 @@
                 transform: translate(0, 0) rotate(360deg);
             }
         }
+        
+        .status-message {
+            display: none;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .success {
+            background-color: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            color: #0f0;
+        }
+        
+        .error {
+            background-color: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            color: #f00;
+        }
     </style>
 </head>
 <body>
-    <!-- Effets de fond -->
     <div class="glow-effect glow-1"></div>
     <div class="glow-effect glow-2"></div>
     
@@ -388,7 +425,8 @@
                     <input type="checkbox" id="playlistToggle">
                     <span class="slider"></span>
                 </label>
-                <span style="color: var(--neon-pink-light);">Télécharger toute la playlist (ZIP)</span>
+                <span style="color: var(--neon-pink-light);">Télécharger la playlist</span>
+                <input type="number" id="maxDownloads" class="max-downloads-input" min="1" max="500" value="100" title="Nombre maximum de chansons">
             </div>
             
             <div class="quality-select">
@@ -400,6 +438,7 @@
             
             <button class="download-btn" id="downloadBtn">TÉLÉCHARGER</button>
             <div class="loader" id="loader"></div>
+            <div class="status-message" id="statusMessage"></div>
         </div>
         
         <div class="signature">Gleaphe 2025 - Neon Fluo Edition</div>
@@ -418,21 +457,23 @@
             });
         });
         
-        // Téléchargement réel
+        // Téléchargement
         document.getElementById('downloadBtn').addEventListener('click', async () => {
             const url = document.getElementById('videoUrl').value.trim();
             const isPlaylist = document.getElementById('playlistToggle').checked;
+            const maxDownloads = document.getElementById('maxDownloads').value;
             const loader = document.getElementById('loader');
             const btn = document.getElementById('downloadBtn');
+            const statusMessage = document.getElementById('statusMessage');
             
             if (!url || !url.match(/youtube\.com|youtu\.be/)) {
-                alert('Veuillez entrer une URL YouTube valide');
+                showStatus('Veuillez entrer une URL YouTube valide', 'error');
                 return;
             }
             
-            // Afficher le loader
             btn.disabled = true;
             loader.style.display = 'block';
+            statusMessage.style.display = 'none';
             
             try {
                 const response = await fetch('/download', {
@@ -443,14 +484,14 @@
                     body: JSON.stringify({
                         url: url,
                         quality: selectedQuality,
-                        isPlaylist: isPlaylist
+                        isPlaylist: isPlaylist,
+                        maxDownloads: maxDownloads
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Créer un lien de téléchargement invisible
                     const a = document.createElement('a');
                     a.href = data.filePath;
                     a.download = data.filename || 'download' + (isPlaylist ? '.zip' : '.mp3');
@@ -458,20 +499,32 @@
                     a.click();
                     document.body.removeChild(a);
                     
-                    // Message de succès
-                    alert(`✅ Téléchargement réussi !\n\nFormat: ${isPlaylist ? 'ZIP' : 'MP3'}\nQualité: ${selectedQuality}kbps`);
+                    showStatus(`✅ Téléchargement réussi! (${formatFileSize(data.size)})`, 'success');
                 } else {
                     throw new Error(data.error || 'Erreur inconnue');
                 }
             } catch (err) {
                 console.error('Erreur:', err);
-                alert(`❌ Échec du téléchargement:\n${err.message}`);
+                showStatus(`❌ ${err.message}`, 'error');
             } finally {
-                // Réinitialiser l'interface
                 loader.style.display = 'none';
                 btn.disabled = false;
             }
         });
+        
+        // Fonctions utilitaires
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            statusMessage.style.display = 'block';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' octets';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
         
         // Effet de saisie automatique pour la démo
         const demoUrls = [
