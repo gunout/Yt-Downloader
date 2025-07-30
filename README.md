@@ -4,7 +4,7 @@ Youtube Downloader * ( Tracks + Playlists .zip )
 # REQUIREMENTS
 
     sudo apt update
-    sudo apt install yt-dlp ffmpeg zip
+    sudo apt install yt-dlp ffmpeg zip unzip
 
 # DEPENDANCES NODE.JS
 
