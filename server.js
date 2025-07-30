@@ -55,7 +55,7 @@ function generateYtdlpCommand(url, outputPath, quality, isPlaylist) {
     
     return [
       ...baseCommand,
-      '--max-downloads 10', // Limite à 10 fichiers pour éviter les problèmes
+      '--max-downloads 100', // Limite augmentée à 100 fichiers
       `-o "${path.join(playlistDir, '%(title)s.%(ext)s')}"`,
       `"${url}"`,
       '&&',
@@ -137,7 +137,6 @@ app.post('/download', async (req, res) => {
 
   } catch (err) {
     console.error('Erreur:', err);
-    // Nettoyage si le fichier existe mais qu'il y a eu une erreur
     if (fs.existsSync(outputPath)) {
       fs.unlinkSync(outputPath);
     }
