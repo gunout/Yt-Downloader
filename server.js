@@ -55,6 +55,7 @@ function generateYtdlpCommand(url, outputPath, quality, isPlaylist) {
     
     return [
       ...baseCommand,
+      '--max-downloads 10', // Limite à 10 fichiers pour éviter les problèmes
       `-o "${path.join(playlistDir, '%(title)s.%(ext)s')}"`,
       `"${url}"`,
       '&&',
@@ -72,7 +73,7 @@ function generateYtdlpCommand(url, outputPath, quality, isPlaylist) {
   }
 }
 
-// Route de téléchargement
+// Route de téléchargement avec gestion améliorée des erreurs
 app.post('/download', async (req, res) => {
   const { url, quality, isPlaylist } = req.body;
   
@@ -92,7 +93,8 @@ app.post('/download', async (req, res) => {
 
     await new Promise((resolve, reject) => {
       const process = exec(cmd, { 
-        timeout: 600000,
+        timeout: 1800000, // 30 minutes timeout
+        maxBuffer: 1024 * 1024 * 10, // 10MB buffer
         cwd: TEMP_DIR
       });
       
@@ -104,9 +106,14 @@ app.post('/download', async (req, res) => {
         output += data.toString();
       });
 
+      process.on('error', (err) => {
+        console.error('Process error:', err);
+        reject(err);
+      });
+
       process.on('close', (code) => {
         if (code === 0 && fs.existsSync(outputPath)) {
-          console.log(output);
+          console.log('Download successful:', output);
           resolve();
         } else {
           console.error('Erreur yt-dlp:', output);
@@ -130,6 +137,10 @@ app.post('/download', async (req, res) => {
 
   } catch (err) {
     console.error('Erreur:', err);
+    // Nettoyage si le fichier existe mais qu'il y a eu une erreur
+    if (fs.existsSync(outputPath)) {
+      fs.unlinkSync(outputPath);
+    }
     res.status(500).json({ 
       success: false,
       error: 'Échec du téléchargement',
@@ -138,41 +149,45 @@ app.post('/download', async (req, res) => {
   }
 });
 
-// Servir les fichiers
+// Servir les fichiers avec gestion améliorée
 app.get('/temp/:filename', (req, res) => {
   const filePath = path.join(TEMP_DIR, req.params.filename);
   
-  if (fs.existsSync(filePath)) {
-    res.download(filePath, (err) => {
-      if (!err) {
-        setTimeout(() => {
-          try {
-            fs.unlinkSync(filePath);
-          } catch (cleanErr) {
-            console.error('Erreur nettoyage:', cleanErr);
-          }
-        }, 5000);
-      }
-    });
-  } else {
-    res.status(404).json({
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({
       success: false,
       error: 'Fichier non trouvé'
     });
   }
+
+  res.download(filePath, (err) => {
+    if (err) {
+      console.error('Erreur de téléchargement:', err);
+    }
+    setTimeout(() => {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (cleanErr) {
+        console.error('Erreur nettoyage:', cleanErr);
+      }
+    }, 5000);
+  });
 });
 
-// Nettoyage des fichiers temporaires
+// Nettoyage des fichiers temporaires au démarrage
 function cleanTempFiles() {
+  if (!fs.existsSync(TEMP_DIR)) return;
+  
   fs.readdir(TEMP_DIR, (err, files) => {
-    if (err) return;
+    if (err) {
+      console.error('Erreur lecture dossier temp:', err);
+      return;
+    }
     
     files.forEach(file => {
       try {
         const filePath = path.join(TEMP_DIR, file);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+        fs.unlinkSync(filePath);
       } catch (err) {
         console.error(`Erreur suppression ${file}:`, err);
       }
@@ -180,13 +195,31 @@ function cleanTempFiles() {
   });
 }
 
-// Route de santé
+// Route de santé améliorée
 app.get('/status', (req, res) => {
-  res.json({
-    status: 'OK',
-    tempFiles: fs.existsSync(TEMP_DIR) ? fs.readdirSync(TEMP_DIR).length : 0,
-    uptime: process.uptime()
-  });
+  try {
+    res.json({
+      status: 'OK',
+      tempDirExists: fs.existsSync(TEMP_DIR),
+      tempFiles: fs.existsSync(TEMP_DIR) ? fs.readdirSync(TEMP_DIR).length : 0,
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage()
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'ERROR',
+      error: err.message
+    });
+  }
+});
+
+// Gestion des erreurs non capturées
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err);
 });
 
 // Démarrage
